@@ -16,7 +16,110 @@ let examInProgress = false;
 let currentQuestions = [];
 let containerId = "practice-container";
 let progressionChart = null;
-let averageChart = null; 
+let averageChart = null;
+
+// ===================================
+// DEFENSIVE UTILITY FUNCTIONS
+// ===================================
+
+/**
+ * Safe division function with zero check
+ * @param {number} numerator - The dividend
+ * @param {number} denominator - The divisor
+ * @param {number} defaultValue - Default value if division by zero (default: 0)
+ * @returns {number} Result of division or default value
+ */
+function safeDivide(numerator, denominator, defaultValue = 0) {
+  if (denominator === 0 || !Number.isFinite(denominator)) {
+    return defaultValue;
+  }
+  return numerator / denominator;
+}
+
+/**
+ * Safe average calculation
+ * @param {array} arr - Array of numbers
+ * @returns {number} Average or 0 if array is empty
+ */
+function safeAverage(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) {
+    return 0;
+  }
+  const sum = arr.reduce((a, b) => a + (Number(b) || 0), 0);
+  return safeDivide(sum, arr.length, 0);
+}
+
+/**
+ * Normalize ISO date string (YYYY-MM-DD HH:mm:ss.sssZ format)
+ * @param {string|Date} dateInput - Date to normalize
+ * @returns {string} ISO string in consistent format
+ */
+function normalizeDate(dateInput) {
+  try {
+    if (typeof dateInput === 'string') {
+      const date = new Date(dateInput);
+      if (!Number.isFinite(date.getTime())) {
+        return new Date().toISOString();
+      }
+      return date.toISOString();
+    }
+    if (dateInput instanceof Date) {
+      if (!Number.isFinite(dateInput.getTime())) {
+        return new Date().toISOString();
+      }
+      return dateInput.toISOString();
+    }
+    return new Date().toISOString();
+  } catch (e) {
+    return new Date().toISOString();
+  }
+}
+
+/**
+ * Extract date portion from ISO string (YYYY-MM-DD)
+ * @param {string} isoString - ISO date string
+ * @returns {string} Date in YYYY-MM-DD format
+ */
+function getDatePart(isoString) {
+  try {
+    return isoString.split('T')[0] || new Date().toISOString().split('T')[0];
+  } catch (e) {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
+/**
+ * Safely get data from localStorage with JSON parsing
+ * @param {string} key - LocalStorage key
+ * @returns {array} Parsed data or empty array
+ */
+function getSafeStorageData(key) {
+  try {
+    const data = localStorage.getItem(key);
+    if (!data) return [];
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.warn(`Error reading ${key} from localStorage:`, e);
+    return [];
+  }
+}
+
+/**
+ * Safely save data to localStorage
+ * @param {string} key - LocalStorage key
+ * @param {any} value - Value to save
+ * @returns {boolean} Success status
+ */
+function setSafeStorageData(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (e) {
+    console.warn(`Error saving to localStorage (${key}):`, e);
+    return false;
+  }
+} 
 
 // ===================================
 // QUESTION BANK
@@ -163,7 +266,7 @@ document.querySelectorAll(".nav button").forEach(btn => {
 // TOPICS PAGE FUNCTIONS
 // ===================================
 function updateTopicsProgress() {
-  const data = JSON.parse(localStorage.getItem("progress")) || [];
+  const data = getSafeStorageData("progress");
   const topics = ["mathematics", "science", "language"];
   
   topics.forEach(topic => {
@@ -171,14 +274,15 @@ function updateTopicsProgress() {
     let percentage = 0;
     
     if (topicData.length > 0) {
-      percentage = Math.round(topicData.reduce((s, d) => s + d.percentage, 0) / topicData.length);
+      const sum = topicData.reduce((s, d) => s + (d.percentage || 0), 0);
+      percentage = Math.round(safeDivide(sum, topicData.length, 0));
     }
     
     const fillEl = document.getElementById(`progress-fill-${topic}`);
     const percentEl = document.getElementById(`percentage-${topic}`);
     
     if (fillEl) {
-      fillEl.style.width = percentage + "%";
+      fillEl.style.width = Math.max(0, Math.min(100, percentage)) + "%";
     }
     if (percentEl) {
       percentEl.innerText = percentage + "%";
@@ -285,12 +389,13 @@ window.addEventListener("load", () => {
 // DASHBOARD FUNCTIONS
 // ===================================
 function updateDashboard() {
-  const data = JSON.parse(localStorage.getItem("progress")) || [];
+  const data = getSafeStorageData("progress");
   const topics = ["mathematics", "science", "language"];
   
-  // Update overall mastery
+  // Update overall mastery (safe divide)
   if (data.length > 0) {
-    const overallMastery = Math.round(data.reduce((s, d) => s + d.percentage, 0) / data.length);
+    const sum = data.reduce((s, d) => s + (d.percentage || 0), 0);
+    const overallMastery = Math.round(safeDivide(sum, data.length, 0));
     document.getElementById("overall-mastery").innerText = overallMastery + "%";
   }
   
@@ -312,14 +417,25 @@ function updateDashboard() {
     let lastActivity = "No activity yet";
     
     if (topicData.length > 0) {
-      percentage = Math.round(topicData.reduce((s, d) => s + d.percentage, 0) / topicData.length);
-      const lastDate = new Date(topicData[topicData.length - 1].date);
-      lastActivity = formatLastActivity(lastDate);
+      const sum = topicData.reduce((s, d) => s + (d.percentage || 0), 0);
+      percentage = Math.round(safeDivide(sum, topicData.length, 0));
+      try {
+        const lastDate = new Date(topicData[topicData.length - 1].date);
+        if (Number.isFinite(lastDate.getTime())) {
+          lastActivity = formatLastActivity(lastDate);
+        }
+      } catch (e) {
+        lastActivity = "Recent activity";
+      }
     }
     
-    document.getElementById(`snap-progress-${topic}`).style.width = percentage + "%";
-    document.getElementById(`snap-text-${topic}`).innerText = percentage + "%";
-    document.getElementById(`snap-activity-${topic}`).innerText = lastActivity;
+    const progressEl = document.getElementById(`snap-progress-${topic}`);
+    const textEl = document.getElementById(`snap-text-${topic}`);
+    const activityEl = document.getElementById(`snap-activity-${topic}`);
+    
+    if (progressEl) progressEl.style.width = Math.max(0, Math.min(100, percentage)) + "%";
+    if (textEl) textEl.innerText = percentage + "%";
+    if (activityEl) activityEl.innerText = lastActivity;
   });
   
   // Update recommendations
@@ -350,49 +466,66 @@ function updateLastActivityDate() {
 }
 
 function calculatePracticeStreak(data) {
-  if (!data.length) return 0;
+  if (!data || !Array.isArray(data) || !data.length) return 0;
   
-  // Get unique dates sorted in descending order (most recent first)
-  const uniqueDates = [...new Set(data.map(d => d.date.split('T')[0]))].sort().reverse();
-  
-  let streak = 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Check if there's activity today or yesterday
-  // If no activity in the last 2 days, streak is broken
-  const lastActivityDate = localStorage.getItem("lastActivityDate");
-  const lastActivityDay = lastActivityDate ? new Date(lastActivityDate + 'T00:00:00') : null;
-  
-  if (!lastActivityDay) {
-    return 0; // No activity recorded
-  }
-  
-  const hoursSinceLastActivity = (today - lastActivityDay) / (1000 * 60 * 60);
-  
-  // If more than 24 hours since last activity and it's past the same time, streak is broken
-  if (hoursSinceLastActivity > 24) {
+  try {
+    // Get unique dates sorted in descending order (most recent first)
+    const uniqueDates = [...new Set(data.map(d => {
+      try {
+        return getDatePart(d.date);
+      } catch (e) {
+        return null;
+      }
+    }).filter(d => d))].sort().reverse();
+    
+    if (!uniqueDates.length) return 0;
+    
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Check if there's activity today or yesterday
+    const lastActivityDate = localStorage.getItem("lastActivityDate");
+    const lastActivityDay = lastActivityDate ? new Date(lastActivityDate + 'T00:00:00') : null;
+    
+    if (!lastActivityDay || !Number.isFinite(lastActivityDay.getTime())) {
+      return 0; // No valid activity recorded
+    }
+    
+    const hoursSinceLastActivity = (today - lastActivityDay) / (1000 * 60 * 60);
+    
+    // If more than 24 hours since last activity, streak is broken
+    if (hoursSinceLastActivity > 24) {
+      return 0;
+    }
+    
+    // Count consecutive days backwards from most recent activity
+    for (let i = 0; i < uniqueDates.length; i++) {
+      const dateStr = uniqueDates[i];
+      try {
+        const date = new Date(dateStr + 'T00:00:00');
+        if (!Number.isFinite(date.getTime())) break;
+        
+        const expectedDate = new Date(today);
+        expectedDate.setDate(expectedDate.getDate() - i);
+        expectedDate.setHours(0, 0, 0, 0);
+        
+        // Check if this date matches the expected position in streak
+        if (date.getTime() === expectedDate.getTime()) {
+          streak++;
+        } else {
+          break;
+        }
+      } catch (e) {
+        break;
+      }
+    }
+    
+    return Math.max(0, streak);
+  } catch (e) {
+    console.warn("Error calculating streak:", e);
     return 0;
   }
-  
-  // Count consecutive days backwards from most recent activity
-  for (let i = 0; i < uniqueDates.length; i++) {
-    const dateStr = uniqueDates[i];
-    const date = new Date(dateStr + 'T00:00:00');
-    
-    const expectedDate = new Date(today);
-    expectedDate.setDate(expectedDate.getDate() - i);
-    expectedDate.setHours(0, 0, 0, 0);
-    
-    // Check if this date matches the expected position in streak
-    if (date.getTime() === expectedDate.getTime()) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  
-  return streak;
 }
 
 function formatLastActivity(date) {
@@ -811,13 +944,14 @@ function startTimer(seconds) {
 // ADAPTIVE DIFFICULTY
 // ===================================
 function getAdaptiveDifficulty(topic) {
-  const data = JSON.parse(localStorage.getItem("progress")) || [];
+  const data = getSafeStorageData("progress");
   const topicData = data.filter(d => d.topic === topic);
   if (!topicData.length) {
     console.log(`No prior data for ${topic}, starting with medium`);
     return "medium";
   }
-  const avg = topicData.reduce((s, d) => s + d.percentage, 0) / topicData.length;
+  const sum = topicData.reduce((s, d) => s + (d.percentage || 0), 0);
+  const avg = safeDivide(sum, topicData.length, 50); // Default to 50 if empty
   console.log(`Adaptive difficulty for ${topic}: avg ${avg.toFixed(1)}% -> ${avg >= 80 ? "hard" : avg < 50 ? "easy" : "medium"}`);
   if (avg >= 80) return "hard";
   if (avg < 50) return "easy";
@@ -892,20 +1026,20 @@ function showResult() {
   examInProgress = false;
 
   const total = answeredQuestions.length;
-  const percentage = total ? Math.round((score / total) * 100) : 0;
+  const percentage = total ? Math.round(safeDivide(score * 100, total, 0)) : 0;
 
   const record = {
-    topic: currentTopic,
-    percentage,
+    topic: currentTopic || "unknown",
+    percentage: Math.max(0, Math.min(100, percentage)), // Clamp 0-100
     mode: examMode ? "exam" : "practice",
-    weakAreas: Object.keys(weakConcepts),
-    date: new Date().toISOString()
+    weakAreas: Object.keys(weakConcepts || {}),
+    date: normalizeDate(new Date())
   };
 
   const storageKey = examMode ? "exams" : "progress";
-  const data = JSON.parse(localStorage.getItem(storageKey)) || [];
+  const data = getSafeStorageData(storageKey);
   data.push(record);
-  localStorage.setItem(storageKey, JSON.stringify(data));
+  setSafeStorageData(storageKey, data);
 
   console.log(`${examMode ? "Exam" : "Quiz"} result saved:`, record);
 
@@ -1068,8 +1202,8 @@ function returnToAssessment() {
 // ANALYTICS VIEW
 // ===================================
 function renderProgress() {
-  const practiceData = JSON.parse(localStorage.getItem("progress")) || [];
-  const examData = JSON.parse(localStorage.getItem("exams")) || [];
+  const practiceData = getSafeStorageData("progress");
+  const examData = getSafeStorageData("exams");
   const data = [...practiceData, ...examData];
   renderMastery(practiceData); // Mastery based on practice only
   renderCharts(practiceData); // Charts based on practice
@@ -1082,20 +1216,22 @@ function renderProgress() {
 function renderMastery(data) {
   const content = document.getElementById("mastery-content");
 
-  if (!data.length) {
+  if (!data || !Array.isArray(data) || !data.length) {
     content.innerHTML = "<p>No learning data yet.</p>";
     return;
   }
 
   const byTopic = {};
   data.forEach(d => {
-    byTopic[d.topic] = byTopic[d.topic] || [];
-    byTopic[d.topic].push(d.percentage);
+    if (d && d.topic) {
+      byTopic[d.topic] = byTopic[d.topic] || [];
+      byTopic[d.topic].push(d.percentage || 0);
+    }
   });
 
   let html = "";
   for (let topic in byTopic) {
-    const avg = Math.round(byTopic[topic].reduce((a, b) => a + b, 0) / byTopic[topic].length);
+    const avg = Math.round(safeAverage(byTopic[topic]));
     const level = avg >= 80 ? "Mastery" : avg >= 50 ? "Intermediate" : "Beginner";
     const color = avg >= 80 ? "#10b981" : avg >= 50 ? "#f59e0b" : "#ef4444";
     html += `
@@ -1103,90 +1239,124 @@ function renderMastery(data) {
         <div class="mastery-topic">${topic.charAt(0).toUpperCase() + topic.slice(1)}</div>
         <div class="mastery-level" style="color: ${color};">${level}</div>
         <div class="mastery-bar">
-          <div class="mastery-fill" style="width: ${avg}%; background-color: ${color};"></div>
+          <div class="mastery-fill" style="width: ${Math.max(0, Math.min(100, avg))}%; background-color: ${color};"></div>
         </div>
         <div class="mastery-score">${avg}%</div>
       </div>
     `;
   }
 
-  content.innerHTML = html;
+  content.innerHTML = html || "<p>No learning data yet.</p>";
 }
 
 // ===================================
 // RENDER CHARTS
 // ===================================
 function renderCharts(data) {
-  if (!data.length) return;
+  if (!data || !Array.isArray(data) || !data.length) return;
 
-  // destroy existing charts if any
-  if (progressionChart) { progressionChart.destroy(); progressionChart = null; }
-  if (averageChart) { averageChart.destroy(); averageChart = null; }
+  // Destroy existing charts BEFORE creating new ones (prevent memory leaks)
+  try {
+    if (progressionChart && typeof progressionChart.destroy === 'function') { 
+      progressionChart.destroy(); 
+      progressionChart = null; 
+    }
+    if (averageChart && typeof averageChart.destroy === 'function') { 
+      averageChart.destroy(); 
+      averageChart = null; 
+    }
+  } catch (e) {
+    console.warn("Error destroying charts:", e);
+    progressionChart = null;
+    averageChart = null;
+  }
 
-  // Sort data by date
-  data.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Progression Chart (Line)
-  const progEl = document.getElementById('progression-chart');
-  const topics = [...new Set(data.map(d => d.topic))];
-  const allDates = [...new Set(data.map(d => d.date))].sort((a, b) => new Date(a) - new Date(b));
-  const datasets = topics.map(topic => {
-    const topicData = data.filter(d => d.topic === topic);
-    const scores = allDates.map(date => {
-      const entry = topicData.find(d => d.date === date);
-      return entry ? entry.percentage : null;
+  try {
+    // Sort data by date safely
+    data.sort((a, b) => {
+      try {
+        return new Date(a.date || 0) - new Date(b.date || 0);
+      } catch (e) {
+        return 0;
+      }
     });
-    return {
-      label: topic.charAt(0).toUpperCase() + topic.slice(1),
-      data: scores,
-      borderColor: topic === 'mathematics' ? '#3b82f6' : '#10b981',
-      backgroundColor: 'transparent',
-      tension: 0.1,
-      spanGaps: true
-    };
-  });
 
-  if (progEl) {
-    const progressionCtx = progEl.getContext('2d');
-    progressionChart = new Chart(progressionCtx, {
-      type: 'line',
-      data: { labels: allDates, datasets },
-      options: {
+    // Progression Chart (Line)
+    const progEl = document.getElementById('progression-chart');
+    const topics = [...new Set(data.map(d => d.topic).filter(t => t))];
+    const allDates = [...new Set(data.map(d => d.date).filter(d => d))].sort((a, b) => {
+      try {
+        return new Date(a) - new Date(b);
+      } catch (e) {
+        return 0;
+      }
+    });
+    
+    const datasets = topics.map(topic => {
+      const topicData = data.filter(d => d.topic === topic);
+      const scores = allDates.map(date => {
+        const entry = topicData.find(d => d.date === date);
+        return entry ? Math.max(0, Math.min(100, entry.percentage || 0)) : null;
+      });
+      return {
+        label: topic.charAt(0).toUpperCase() + topic.slice(1),
+        data: scores,
+        borderColor: topic === 'mathematics' ? '#3b82f6' : '#10b981',
+        backgroundColor: 'transparent',
+        tension: 0.1,
+        spanGaps: true
+      };
+    });
+
+    if (progEl && progEl.getContext) {
+      const progressionCtx = progEl.getContext('2d');
+      if (progressionCtx) {
+        progressionChart = new Chart(progressionCtx, {
+          type: 'line',
+          data: { labels: allDates, datasets },
+          options: {
         responsive: true,
         scales: { y: { beginAtZero: true, max: 100 } },
         plugins: { legend: { display: true } }
       }
-    });
-  }
-
-  // Average Chart (Bar)
-  const avgEl = document.getElementById('average-chart');
-  const averages = topics.map(topic => {
-    const topicData = data.filter(d => d.topic === topic);
-    const avg = topicData.reduce((sum, d) => sum + d.percentage, 0) / topicData.length;
-    return Math.round(avg);
-  });
-
-  if (avgEl) {
-    const averageCtx = avgEl.getContext('2d');
-    averageChart = new Chart(averageCtx, {
-      type: 'bar',
-      data: {
-        labels: topics.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
-        datasets: [{
-          label: 'Average Score (%)',
-          data: averages,
-          backgroundColor: '#3b82f6',
-          borderColor: '#2563eb',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: true, max: 100 } },
-        plugins: { legend: { display: false } }
+        });
       }
+    }
+
+    // Average Chart (Bar)
+    const avgEl = document.getElementById('average-chart');
+    const averages = topics.map(topic => {
+      const topicData = data.filter(d => d.topic === topic);
+      const sum = topicData.reduce((sum, d) => sum + (d.percentage || 0), 0);
+      const avg = Math.round(safeDivide(sum, topicData.length, 0));
+      return Math.max(0, Math.min(100, avg));
     });
+
+    if (avgEl && avgEl.getContext) {
+      const averageCtx = avgEl.getContext('2d');
+      if (averageCtx) {
+        averageChart = new Chart(averageCtx, {
+          type: 'bar',
+          data: {
+            labels: topics.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+            datasets: [{
+              label: 'Average Score (%)',
+              data: averages,
+              backgroundColor: '#3b82f6',
+              borderColor: '#2563eb',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, max: 100 } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("Error rendering charts:", e);
   }
 } 
 
