@@ -5,62 +5,485 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Adaptive Learning Assistant</title>
   <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
-  <!-- Header -->
-  <header class="header">
-    <h1>Adaptive Learning Assistant</h1>
-    <p>Personalized learning, step by step</p>
-  </header>
-
-  <!-- Navigation -->
-  <nav class="nav">
-    <button data-page="dashboard">Dashboard</button>
-    <button data-page="topics">Topics</button>
-    <button data-page="quiz">Quiz</button>
-    <button data-page="progress">Progress</button>
-  </nav>
-
-  <!-- Main Content -->
-  <main class="main">
-
-    <!-- Dashboard -->
-    <section id="dashboard" class="page active">
-      <h2>Student Dashboard</h2>
-      <p>Welcome! Start learning by choosing a topic or taking a quiz.</p>
-    </section>
-
-    <!-- Topics -->
-    <section id="topics" class="page">
-      <h2>Learning Topics</h2>
-      <ul>
-        <li>Mathematics</li>
-        <li>Science</li>
-        <li>Computer Studies (coming soon)</li>
-      </ul>
-    </section>
-
-    <!-- Quiz -->
-    <section id="quiz" class="page">
-      <h2>Quiz</h2>
-      <div id="quiz-container">
-        <p>Select a topic to begin.</p>
-        <button onclick="startQuiz('mathematics')">Mathematics</button>
-        <button onclick="startQuiz('science')">Science</button>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Adaptive Learning</h1>
+        <p>Assistant</p>
       </div>
-    </section>
+      <nav class="nav">
+        <button data-page="dashboard" class="nav-item active">Dashboard</button>
+        <button data-page="topics" class="nav-item">Topics</button>
+        <button data-page="assessment" class="nav-item">Assessment</button>
+        <button data-page="progress" class="nav-item">Progress</button>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <div class="content">
+        <!-- Dashboard -->
+        <section id="dashboard" class="page active">
+          <!-- Hero Section -->
+          <div class="dashboard-hero">
+            <div class="hero-content">
+              <h1 id="hero-greeting">Welcome Back, Learner</h1>
+              <p class="hero-subtitle">Keep up your momentum and master new skills.</p>
+              
+              <div class="hero-stats">
+                <div class="hero-stat">
+                  <div class="stat-value" id="overall-mastery">0%</div>
+                  <div class="stat-label">Overall Mastery</div>
+                </div>
+                <div class="hero-stat">
+                  <div class="stat-value" id="practice-streak">0</div>
+                  <div class="stat-label">Day Streak</div>
+                </div>
+              </div>
+              
+              <button class="hero-cta" onclick="goToPractice()">Continue Learning</button>
+            </div>
+            <div class="hero-visual">
+              <div class="hero-circle">🎯</div>
+            </div>
+          </div>
 
-    <!-- Progress -->
-    <section id="progress" class="page">
-      <h2>Progress</h2>
-      <p>Your quiz results and performance will appear here.</p>
-    </section>
+          <!-- Today's Focus Card -->
+          <div class="focus-card" id="focus-card">
+            <div class="focus-badge">🎯 TODAY'S FOCUS</div>
+            <div class="focus-content">
+              <div class="focus-subject">
+                <div class="focus-icon" id="focus-icon">📚</div>
+                <div>
+                  <h2 id="focus-subject-name">Mathematics</h2>
+                  <p id="focus-topic-name" class="focus-topic">Basic Arithmetic</p>
+                </div>
+              </div>
+              <div class="focus-details">
+                <div class="focus-detail">
+                  <span class="detail-label">⏱️ Time</span>
+                  <span class="detail-value" id="focus-time">10 min</span>
+                </div>
+                <div class="focus-detail">
+                  <span class="detail-label">📈 Mastery</span>
+                  <span class="detail-value" id="focus-mastery">0%</span>
+                </div>
+                <div class="focus-detail">
+                  <span class="detail-label">🎯 Difficulty</span>
+                  <span class="detail-value" id="focus-difficulty">Easy</span>
+                </div>
+              </div>
+              <div class="focus-progress">
+                <div class="focus-progress-bar">
+                  <div class="focus-progress-fill" id="focus-progress-fill" style="width: 0%"></div>
+                </div>
+                <p class="focus-progress-text" id="focus-progress-text">0% mastery - time to level up!</p>
+              </div>
+              <button class="focus-button" onclick="startFocusMode()">Start Focus</button>
+            </div>
+          </div>
 
-  </main>
+          <!-- Subject Snapshot Cards -->
 
+          <div class="dashboard-section">
+            <h2 class="section-title">Your Subjects</h2>
+            <div class="subject-snapshot-grid">
+              <div class="subject-snapshot" data-topic="mathematics">
+                <div class="snapshot-header">
+                  <div class="snapshot-icon">📚</div>
+                  <div class="snapshot-title">Mathematics</div>
+                </div>
+                <div class="snapshot-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="snap-progress-mathematics" style="width: 0%"></div>
+                  </div>
+                  <div class="progress-text" id="snap-text-mathematics">0%</div>
+                </div>
+                <div class="snapshot-activity" id="snap-activity-mathematics">No activity yet</div>
+                <button class="snapshot-button" onclick="resumeSubject('mathematics')">Resume</button>
+              </div>
+
+              <div class="subject-snapshot" data-topic="science">
+                <div class="snapshot-header">
+                  <div class="snapshot-icon">🔬</div>
+                  <div class="snapshot-title">Science</div>
+                </div>
+                <div class="snapshot-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="snap-progress-science" style="width: 0%"></div>
+                  </div>
+                  <div class="progress-text" id="snap-text-science">0%</div>
+                </div>
+                <div class="snapshot-activity" id="snap-activity-science">No activity yet</div>
+                <button class="snapshot-button" onclick="resumeSubject('science')">Resume</button>
+              </div>
+
+              <div class="subject-snapshot" data-topic="language">
+                <div class="snapshot-header">
+                  <div class="snapshot-icon">📖</div>
+                  <div class="snapshot-title">Language</div>
+                </div>
+                <div class="snapshot-progress">
+                  <div class="progress-bar">
+                    <div class="progress-fill" id="snap-progress-language" style="width: 0%"></div>
+                  </div>
+                  <div class="progress-text" id="snap-text-language">0%</div>
+                </div>
+                <div class="snapshot-activity" id="snap-activity-language">No activity yet</div>
+                <button class="snapshot-button" onclick="resumeSubject('language')">Resume</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Recommendation Block -->
+          <div class="dashboard-section">
+            <h2 class="section-title">🎯 Recommended for You</h2>
+            <div class="recommendation-card" id="recommendation-card">
+              <div class="recommendation-content">
+                <h3 id="recommendation-title">Get Started</h3>
+                <p id="recommendation-description">Complete your first quiz to unlock personalized recommendations.</p>
+                <button class="recommendation-button" onclick="goToPractice()">Start Learning</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress Overview with Charts -->
+          <div class="dashboard-section">
+            <h2 class="section-title">📊 Progress Overview</h2>
+            <div class="analytics-grid">
+              <div class="analytics-card">
+                <h3>Performance Trends</h3>
+                <canvas id="progression-chart" width="400" height="200"></canvas>
+              </div>
+              <div class="analytics-card">
+                <h3>Topic Averages</h3>
+                <canvas id="average-chart" width="400" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Achievements Section -->
+          <div class="dashboard-section">
+            <h2 class="section-title">🏆 Achievements</h2>
+            <div class="achievements-grid">
+              <div class="achievement-badge" id="achievement-first-quiz" style="opacity: 0.5;">
+                <div class="achievement-icon">✨</div>
+                <div class="achievement-name">First Quiz</div>
+                <div class="achievement-desc">Complete your first quiz</div>
+              </div>
+              <div class="achievement-badge" id="achievement-week-streak" style="opacity: 0.5;">
+                <div class="achievement-icon">🔥</div>
+                <div class="achievement-name">Week Streak</div>
+                <div class="achievement-desc">Practice 7 days in a row</div>
+              </div>
+              <div class="achievement-badge" id="achievement-master-topic" style="opacity: 0.5;">
+                <div class="achievement-icon">👑</div>
+                <div class="achievement-name">Topic Master</div>
+                <div class="achievement-desc">Score 90%+ on a topic</div>
+              </div>
+              <div class="achievement-badge" id="achievement-perfect-exam" style="opacity: 0.5;">
+                <div class="achievement-icon">⭐</div>
+                <div class="achievement-name">Perfect Exam</div>
+                <div class="achievement-desc">Score 100% on exam</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Topics -->
+        <section id="topics" class="page">
+          <div class="page-header">
+            <h1>Learning Topics</h1>
+            <p>Explore available subjects</p>
+          </div>
+          <div class="subject-grid">
+            <div class="subject-card" data-topic="mathematics" onclick="navigateToTopic('mathematics')">
+              <div class="subject-card-header">
+                <div class="subject-icon">📚</div>
+                <div class="subject-title">Mathematics</div>
+              </div>
+              <p class="subject-subtitle">Master calculations, algebra, and quantitative reasoning.</p>
+              <div class="subject-progress">
+                <div class="progress-label">Your Progress</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" id="progress-mathematics">
+                    <div class="progress-fill" id="progress-fill-mathematics" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="progress-percentage" id="percentage-mathematics">0%</div>
+              </div>
+            </div>
+
+            <div class="subject-card" data-topic="science" onclick="navigateToTopic('science')">
+              <div class="subject-card-header">
+                <div class="subject-icon">🔬</div>
+                <div class="subject-title">Science</div>
+              </div>
+              <p class="subject-subtitle">Explore biology, physics, and natural phenomena.</p>
+              <div class="subject-progress">
+                <div class="progress-label">Your Progress</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" id="progress-science">
+                    <div class="progress-fill" id="progress-fill-science" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="progress-percentage" id="percentage-science">0%</div>
+              </div>
+            </div>
+
+            <div class="subject-card" data-topic="language" onclick="navigateToTopic('language')">
+              <div class="subject-card-header">
+                <div class="subject-icon">📖</div>
+                <div class="subject-title">Language</div>
+              </div>
+              <p class="subject-subtitle">Develop vocabulary, grammar, and communication skills.</p>
+              <div class="subject-progress">
+                <div class="progress-label">Your Progress</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar" id="progress-language">
+                    <div class="progress-fill" id="progress-fill-language" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="progress-percentage" id="percentage-language">0%</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Subject Detail -->
+        <section id="subject-detail" class="page">
+          <div class="page-header">
+            <button class="back-button" onclick="backToTopics()">← Back to Topics</button>
+            <h1 id="subject-detail-title">Subject Name</h1>
+            <p id="subject-detail-subtitle">Subject description</p>
+          </div>
+          
+          <div class="section-tabs">
+            <button class="section-tab active" onclick="switchSection('learn')">📖 Learn</button>
+            <button class="section-tab" onclick="switchSection('practice')">✏️ Practice</button>
+            <button class="section-tab" onclick="switchSection('challenges')">⚡ Challenges</button>
+            <button class="section-tab" onclick="switchSection('weak-areas')">📊 Weak Areas</button>
+          </div>
+
+          <!-- Learn Section -->
+          <div id="section-learn" class="section-content active">
+            <div class="section-placeholder">
+              <h3>📖 Learn Content</h3>
+              <p>This section will contain detailed explanations, concepts, and learning materials for this subject.</p>
+              <div class="placeholder-cards">
+                <div class="placeholder-card">
+                  <div class="placeholder-icon">📚</div>
+                  <div class="placeholder-text">Concept Explanations</div>
+                </div>
+                <div class="placeholder-card">
+                  <div class="placeholder-icon">🎓</div>
+                  <div class="placeholder-text">Interactive Lessons</div>
+                </div>
+                <div class="placeholder-card">
+                  <div class="placeholder-icon">📖</div>
+                  <div class="placeholder-text">Study Resources</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Practice Section -->
+          <div id="section-practice" class="section-content">
+            <div class="section-placeholder">
+              <h3>✏️ Practice Mode</h3>
+              <p>Strengthen your skills with adaptive quizzes tailored to your learning level.</p>
+              <button class="cta-button" onclick="startQuiz(currentDetailTopic, false)">Start Practice Quiz</button>
+            </div>
+          </div>
+
+          <!-- Challenges Section -->
+          <div id="section-challenges" class="section-content">
+            <div class="section-placeholder">
+              <h3>⚡ Challenges</h3>
+              <p>Test your mastery with timed challenges and comprehensive exams.</p>
+              <button class="cta-button" onclick="startExam(currentDetailTopic)">Take Challenge Exam</button>
+            </div>
+          </div>
+
+          <!-- Weak Areas Section -->
+          <div id="section-weak-areas" class="section-content">
+            <div class="section-placeholder">
+              <h3>📊 Weak Areas</h3>
+              <p>Areas where you need more practice based on your quiz performance.</p>
+              <div id="weak-areas-content">
+                <p style="color: var(--text-muted); margin-top: 16px;">Complete some quizzes to identify areas for improvement.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Assessment -->
+
+        <section id="assessment" class="page">
+          <div id="assessment-landing" class="assessment-view active">
+            <div class="page-header">
+              <h1>Assessment</h1>
+              <p>Test your knowledge with practice quizzes or timed exams</p>
+            </div>
+            <div class="cards-grid">
+              <div class="card">
+                <h3>Practice Mode</h3>
+                <p>Take adaptive quizzes to learn and improve progressively.</p>
+                <div id="practice-container">
+                  <button onclick="startQuiz('mathematics', false)" class="quiz-button">Mathematics</button>
+                  <button onclick="startQuiz('science', false)" class="quiz-button">Science</button>
+                </div>
+              </div>
+              <div class="card">
+                <h3>Exam Mode</h3>
+                <p>Take timed assessments to evaluate your mastery.</p>
+                <div id="exam-container">
+                  <button onclick="startExam('mathematics')" class="exam-button">Mathematics Exam</button>
+                  <button onclick="startExam('science')" class="exam-button">Science Exam</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pre-Assessment Screen -->
+          <div id="assessment-prep" class="assessment-view">
+            <div class="prep-container">
+              <div class="prep-header">
+                <div class="prep-emoji">📋</div>
+                <h2 id="prep-topic-name">Get Ready to Learn!</h2>
+              </div>
+              <div class="prep-details">
+                <div class="prep-detail-card">
+                  <span class="prep-icon">📝</span>
+                  <div>
+                    <div class="prep-label">Questions</div>
+                    <div class="prep-value" id="prep-questions">5</div>
+                  </div>
+                </div>
+                <div class="prep-detail-card">
+                  <span class="prep-icon">⏱️</span>
+                  <div>
+                    <div class="prep-label">Time</div>
+                    <div class="prep-value" id="prep-time">5-10 min</div>
+                  </div>
+                </div>
+                <div class="prep-detail-card">
+                  <span class="prep-icon">📊</span>
+                  <div>
+                    <div class="prep-label">Level</div>
+                    <div class="prep-value" id="prep-difficulty">Medium</div>
+                  </div>
+                </div>
+              </div>
+              <div class="prep-message">
+                <p id="prep-message-text">You're doing great! Focus on each question and do your best.</p>
+              </div>
+              <div class="prep-actions">
+                <button onclick="startAssessmentQuiz()" class="prep-button primary">Start Assessment</button>
+                <button onclick="cancelAssessment()" class="prep-button secondary">Cancel</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- During-Assessment Screen -->
+          <div id="assessment-quiz" class="assessment-view">
+            <div class="quiz-header">
+              <button onclick="cancelQuiz()" class="quiz-exit" title="Exit">✕</button>
+              <div class="quiz-progress-info">
+                <span id="quiz-question-counter">Question 1 of 5</span>
+                <span id="quiz-timer" class="quiz-timer">15:00</span>
+              </div>
+              <div class="quiz-progress-bar">
+                <div id="quiz-progress-fill" class="progress-fill"></div>
+              </div>
+            </div>
+            <div class="quiz-content">
+              <div id="quiz-question" class="quiz-question">
+                <!-- Populated by renderQuestion() -->
+              </div>
+              <div id="quiz-options" class="quiz-options">
+                <!-- Populated by renderQuestion() -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Post-Assessment Results Screen -->
+          <div id="assessment-results" class="assessment-view">
+            <div class="results-container">
+              <div class="results-header">
+                <div class="results-emoji" id="results-emoji">🎉</div>
+                <h2 id="results-title">Assessment Complete!</h2>
+              </div>
+
+              <div class="results-score">
+                <div class="score-circle">
+                  <div class="score-percent" id="results-percentage">85%</div>
+                  <div class="score-label">Score</div>
+                </div>
+                <div class="score-details">
+                  <p id="results-score-text">You got 17 out of 20 questions correct!</p>
+                  <p id="results-mastery-change" class="mastery-change">📈 Great improvement!</p>
+                </div>
+              </div>
+
+              <div class="results-feedback">
+                <div class="feedback-section">
+                  <h3>✨ What Went Well</h3>
+                  <div id="results-strengths" class="feedback-items">
+                    <p class="feedback-item-placeholder">You answered all algebra questions correctly!</p>
+                  </div>
+                </div>
+                <div class="feedback-section">
+                  <h3>🎯 Areas to Improve</h3>
+                  <div id="results-improvements" class="feedback-items">
+                    <p class="feedback-item-placeholder">Focus on geometry concepts next time.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="results-actions">
+                <button onclick="recommendNextAction('retry')" class="results-button primary">Try Again</button>
+                <button onclick="recommendNextAction('next')" class="results-button secondary">Next Topic</button>
+                <button onclick="returnToAssessment()" class="results-button tertiary">Assessment Menu</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Progress -->
+        <section id="progress" class="page">
+          <div class="page-header">
+            <h1>Progress Analytics</h1>
+            <p>Review your learning metrics and performance insights</p>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Mastery Overview</h3>
+              <div id="mastery-content">
+                <p>No learning data yet.</p>
+              </div>
+            </div>
+            <div class="analytics-card">
+              <h3>Performance Trends</h3>
+              <canvas id="progression-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="analytics-card">
+              <h3>Topic Averages</h3>
+              <canvas id="average-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="analytics-card">
+              <h3>Learning Timeline</h3>
+              <div id="timeline-content">
+                <p>No assessment history yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

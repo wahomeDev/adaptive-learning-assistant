@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adaptive Learning Assistant</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>Adaptive Learning</h1>
+        <p>Assistant</p>
+      </div>
+      <nav class="nav">
+        <button data-page="dashboard" class="nav-item active">Dashboard</button>
+        <button data-page="topics" class="nav-item">Topics</button>
+        <button data-page="assessment" class="nav-item">Assessment</button>
+        <button data-page="progress" class="nav-item">Progress</button>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <div class="content">
+        <!-- Dashboard -->
+        <section id="dashboard" class="page active">
+          <div class="page-header">
+            <h1>Dashboard</h1>
+            <p>Overview of your learning progress</p>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <h3>Welcome Back</h3>
+              <p>Continue your personalized learning journey. Select a topic or take a quiz to get started.</p>
+            </div>
+            <div class="card">
+              <h3>Quick Stats</h3>
+              <p>Track your performance and identify areas for improvement.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Topics -->
+        <section id="topics" class="page">
+          <div class="page-header">
+            <h1>Learning Topics</h1>
+            <p>Explore available subjects</p>
+          </div>
+          <div class="cards-grid">
+            <div class="card topic-card">
+              <h3>Mathematics</h3>
+              <p>Master fundamental and advanced mathematical concepts.</p>
+            </div>
+            <div class="card topic-card">
+              <h3>Science</h3>
+              <p>Discover the principles of physics, chemistry, and biology.</p>
+            </div>
+            <div class="card topic-card coming-soon">
+              <h3>Computer Studies</h3>
+              <p>Coming soon</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Assessment -->
+        <section id="assessment" class="page">
+          <div class="page-header">
+            <h1>Assessment</h1>
+            <p>Test your knowledge with practice quizzes or timed exams</p>
+          </div>
+          <div class="cards-grid">
+            <div class="card">
+              <h3>Practice Mode</h3>
+              <p>Take adaptive quizzes to learn and improve progressively.</p>
+              <div id="practice-container">
+                <button onclick="startQuiz('mathematics', false)" class="quiz-button">Mathematics</button>
+                <button onclick="startQuiz('science', false)" class="quiz-button">Science</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>Exam Mode</h3>
+              <p>Take timed assessments to evaluate your mastery.</p>
+              <div id="exam-container">
+                <button onclick="startExam('mathematics')" class="exam-button">Mathematics Exam</button>
+                <button onclick="startExam('science')" class="exam-button">Science Exam</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Progress -->
+        <section id="progress" class="page">
+          <div class="page-header">
+            <h1>Progress Analytics</h1>
+            <p>Review your learning metrics and performance insights</p>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <h3>Mastery Overview</h3>
+              <div id="mastery-content">
+                <p>No learning data yet.</p>
+              </div>
+            </div>
+            <div class="analytics-card">
+              <h3>Performance Trends</h3>
+              <canvas id="progression-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="analytics-card">
+              <h3>Topic Averages</h3>
+              <canvas id="average-chart" width="400" height="200"></canvas>
+            </div>
+            <div class="analytics-card">
+              <h3>Learning Timeline</h3>
+              <div id="timeline-content">
+                <p>No assessment history yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
