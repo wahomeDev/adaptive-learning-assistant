@@ -294,9 +294,10 @@ function updateDashboard() {
     document.getElementById("overall-mastery").innerText = overallMastery + "%";
   }
   
-  // Calculate practice streak
+  // Calculate and update practice streak
+  updateLastActivityDate();
   const streak = calculatePracticeStreak(data);
-  document.getElementById("practice-streak").innerText = streak;
+  document.getElementById("practice-streak").innerText = "🔥 " + streak;
   
   // Update greeting
   const hour = new Date().getHours();
@@ -336,21 +337,55 @@ function updateDashboard() {
   }
 }
 
+// ===================================
+// STREAK TRACKING
+// ===================================
+function updateLastActivityDate() {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const lastActivity = localStorage.getItem("lastActivityDate");
+  
+  if (lastActivity !== today) {
+    localStorage.setItem("lastActivityDate", today);
+  }
+}
+
 function calculatePracticeStreak(data) {
   if (!data.length) return 0;
   
-  const uniqueDates = [...new Set(data.map(d => d.date))].sort((a, b) => new Date(b) - new Date(a));
-  let streak = 0;
-  let currentDate = new Date();
-  currentDate.setHours(0, 0, 0, 0);
+  // Get unique dates sorted in descending order (most recent first)
+  const uniqueDates = [...new Set(data.map(d => d.date.split('T')[0]))].sort().reverse();
   
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Check if there's activity today or yesterday
+  // If no activity in the last 2 days, streak is broken
+  const lastActivityDate = localStorage.getItem("lastActivityDate");
+  const lastActivityDay = lastActivityDate ? new Date(lastActivityDate + 'T00:00:00') : null;
+  
+  if (!lastActivityDay) {
+    return 0; // No activity recorded
+  }
+  
+  const hoursSinceLastActivity = (today - lastActivityDay) / (1000 * 60 * 60);
+  
+  // If more than 24 hours since last activity and it's past the same time, streak is broken
+  if (hoursSinceLastActivity > 24) {
+    return 0;
+  }
+  
+  // Count consecutive days backwards from most recent activity
   for (let i = 0; i < uniqueDates.length; i++) {
-    const date = new Date(uniqueDates[i]);
-    date.setHours(0, 0, 0, 0);
+    const dateStr = uniqueDates[i];
+    const date = new Date(dateStr + 'T00:00:00');
     
-    const daysDiff = Math.floor((currentDate - date) / (1000 * 60 * 60 * 24));
+    const expectedDate = new Date(today);
+    expectedDate.setDate(expectedDate.getDate() - i);
+    expectedDate.setHours(0, 0, 0, 0);
     
-    if (daysDiff === streak) {
+    // Check if this date matches the expected position in streak
+    if (date.getTime() === expectedDate.getTime()) {
       streak++;
     } else {
       break;
